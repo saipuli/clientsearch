@@ -1,0 +1,12 @@
+#use-custom-markers {
+    min-width: 240px;
+}
+
+#use-custom-markers, #show-tooltips {
+    margin-top: 10px;
+    margin-left: 10px;
+}
+
+#gridContainer {
+    width: 100%;
+}
