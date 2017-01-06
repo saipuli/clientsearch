@@ -8,8 +8,25 @@
 }
 #map{
     min-width: 400px;
-    max-width: 800px;
+    max-width: 75%;
+    margin: 0 auto;
 }
 #gridContainer {
-    width: 80%;
+    width: 75%;
+    margin: 20px auto;
+}
+#search-string{
+    line-height: 20px;
+    font-size: 1.5em;
+    border-radius: 5px;
+    padding: 10px;
+    width: 100%;
+}
+.fieldset{
+    min-width: 400px;
+    max-width: 50%;
+    margin: 20px auto;
+}
+.dx-viewport{
+    background-color: teal;
 }

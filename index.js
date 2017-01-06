@@ -1,24 +1,32 @@
 $(function(){
-  $("#search-string").dxTextBox({
-      value: "",
-      showClearButton: true,
-      placeholder: "Search for a Business",
-      valueChangeEvent: "keyup",
-      onValueChanged: function(data) {
-        $.getJSON('https://abclients.search.windows.net/indexes/clients/docs?api-version=2016-09-01&search='+data.value+'&api-key=F59E2669524D8C8DF68FC6833A2384A1', function(data){
-          console.log(data.value);
-          console.log(data.value && data.value.count > 0);
+  $("#search-string").change(function() {
+        markersData = [whereami];
+        // if(!$(this).val())
+        // {
+        //     mapWidget.option("markers", markersData);
+        //     mapWidget.option("autoAdjust", true);
+        //     $("#gridContainer").hide();
+        //     return;
+        // }
+        $.getJSON('https://abclients.search.windows.net/indexes/clients/docs?api-version=2016-09-01&search='+$(this).val()+'&api-key=F59E2669524D8C8DF68FC6833A2384A1', function(data){
           if(data.value && data.value.length > 0){
-            markersData = [];
             $.each(data.value, function(id, item){
             	if(item.geolocation && item.geolocation.coordinates){
-                markersData.push({
-                  location: [item.geolocation.coordinates[1], item.geolocation.coordinates[0]],
-                  tooltip:{
-                    text: item.tlegalname
-                  }
-            	  });
+                    markersData.push({
+                        location: [item.geolocation.coordinates[1], item.geolocation.coordinates[0]],
+                        tooltip:{
+                            text: item.tlegalname +"<br/>"+ item.tphysicaladdress2 +', '+ item.tphysicalcity + '<br/> ' + item.tphysicalstate + ' ' + item.tphysicalzipcode5
+                        }
+                    });
             	}
+                else{
+                    markersData.push({
+                        location: item.tphysicalcity + ', ' + item.tphysicalstate,
+                        tooltip:{
+                            text: item.tlegalname +"<br/>"+ item.tphysicaladdress2 +', '+ item.tphysicalcity + '<br/> ' + item.tphysicalstate + ' ' + item.tphysicalzipcode5
+                        }
+                    });
+                }
             });
             mapWidget.option("markers", markersData);
             mapWidget.option("autoAdjust", true);
@@ -33,62 +41,67 @@ $(function(){
                 }, {
                     dataField: "tcontactperson",
                     caption: "Contact",
-                    width: 70
                 }, {
                     dataField: "tphysicaladdress2",
                     caption: "Address",
-                    width: 70
                 }, {
                     dataField: "tphysicalcity",
                     caption: "City",
-                    width: 70
                 }, "naicname"],
               onSelectionChanged: function (selectedItems) {
                 var data = selectedItems.selectedRowsData[0];
                 if(data) {
+                    console.log(data);
                   markersData = $.map(markersData, function(item){
+                    if(data.geolocation){
+                        return $.extend(true, {}, item,
+                        { 
+                        tooltip: { 
+                            isShown: (item.location[0] === data.geolocation.coordinates[1] && item.location[1] === data.geolocation.coordinates[0]) 
+                        }
+                        });
+                    }
                     return $.extend(true, {}, item,
-                    { 
-                      tooltip: { 
-                        isShown: (item.location[0] === data.geolocation.coordinates[1] && item.location[1] === data.geolocation.coordinates[0]) 
-                      }
-                    });
+                        { 
+                        tooltip: { 
+                            isShown: (item.tooltip.text === data.tlegalname +"<br/>"+ data.tphysicaladdress2 +', '+ data.tphysicalcity + '<br/> ' + data.tphysicalstate + ' ' + data.tphysicalzipcode5) 
+                        }
+                        });
                   });
-                  mapWidget.option({center: [data.geolocation.coordinates[1], data.geolocation.coordinates[0]], zoom: 18});
-                  mapWidget.option("autoAdjust", false);
+                  if(!data.geolocation){
+                    DevExpress.ui.notify("Geocode not available for location.", "error", 1000);
+                  }
+                  else{
+                    mapWidget.option({center: [data.geolocation.coordinates[1], data.geolocation.coordinates[0]], zoom: 18});
+                    mapWidget.option("autoAdjust", false);
+                    mapWidget.option("zoom", 18);
+                  }
                   mapWidget.option("markers", markersData);
-                  mapWidget.option("zoom", 18);
                 }
               }
             });
           }
         });
       }
-  });
+  );
     
-    //var markerUrl = "https://js.devexpress.com/Demos/RealtorApp/images/map-marker.png",
-    var markersData = [{
-                location: [40.755833, -73.986389],
-                tooltip: {
-                    text: "Times Square"
-                }
-            }, {
-                location: "40.7825, -73.966111",
-                tooltip: {
-                    text: "Central Park"
-                }
-            }, {
-                location: { lat: 40.753889, lng: -73.981389},
-                tooltip: {
-                    text: "Fifth Avenue"
-                }
-            }, {
-                location: "Brooklyn Bridge,New York,NY",
-                tooltip: {
-                    text: "Brooklyn Bridge"
-                }
-            }
-        ];
+    var markerUrl = "https://js.devexpress.com/Demos/RealtorApp/images/map-marker.png";
+    var whereami = {location: "Louisville, KY", iconSrc:markerUrl, tooltip: {text: "You are here!!"}};
+    var markersData = [whereami];
+    if ("geolocation" in navigator){ //check geolocation available 
+        //try to get user current location using getCurrentPosition() method
+        navigator.geolocation.getCurrentPosition(function(position){
+            whereami = {location: [position.coords.latitude, position.coords.longitude], iconSrc:markerUrl, tooltip: {text: "You are here!!"}};
+                markersData.push(
+                    whereami
+                );
+                mapWidget.option("markers", markersData);
+                mapWidget.option("center", [position.coords.latitude, position.coords.longitude]);
+                DevExpress.ui.notify("Found your location ["+position.coords.latitude+", "+ position.coords.longitude + "]", "success", "600");
+            }, show_error);
+    }else{
+        DevExpress.ui.notify("Browser doesn't support location", "error", "600");
+    }
     var mapWidget = $("#map").dxMap({
         zoom: 14,
         provider: "bing",
@@ -100,4 +113,21 @@ $(function(){
         autoAdjust: false,
         center: "Louisville, KY"
     }).dxMap("instance");
+
+    function show_error(error){
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                DevExpress.ui.notify("Location Permission denied by user.", "error", "600");
+                break;
+            case error.POSITION_UNAVAILABLE:
+                DevExpress.ui.notify("Location position unavailable.", "error", "600");
+                break;
+            case error.TIMEOUT:
+                DevExpress.ui.notify("Location Request timeout.", "error", "600");
+                break;
+            case error.UNKNOWN_ERROR:
+                DevExpress.ui.notify("Location: Unknown error.", "error", "600");
+                break;
+        }
+    }
 });
