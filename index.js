@@ -1,13 +1,6 @@
 $(function(){
   $("#search-string").change(function() {
         markersData = [whereami];
-        // if(!$(this).val())
-        // {
-        //     mapWidget.option("markers", markersData);
-        //     mapWidget.option("autoAdjust", true);
-        //     $("#gridContainer").hide();
-        //     return;
-        // }
         $.getJSON('https://abclients.search.windows.net/indexes/clients/docs?api-version=2016-09-01&search='+$(this).val()+'&api-key=F59E2669524D8C8DF68FC6833A2384A1', function(data){
           if(data.value && data.value.length > 0){
             $.each(data.value, function(id, item){
@@ -28,59 +21,14 @@ $(function(){
                     });
                 }
             });
+            dataGrid.option("dataSource", data.value);
+          }
+          else{
+              dataGrid.option("dataSource", [])
+          }
             mapWidget.option("markers", markersData);
             mapWidget.option("autoAdjust", true);
-            $("#gridContainer").dxDataGrid({
-              dataSource: data.value,
-              selection: {
-                mode: "single"
-              },
-              columns: [{
-                    dataField: "tname",
-                    caption: "Business"
-                }, {
-                    dataField: "tcontactperson",
-                    caption: "Contact",
-                }, {
-                    dataField: "tphysicaladdress2",
-                    caption: "Address",
-                }, {
-                    dataField: "tphysicalcity",
-                    caption: "City",
-                }, "naicname"],
-              onSelectionChanged: function (selectedItems) {
-                var data = selectedItems.selectedRowsData[0];
-                if(data) {
-                    console.log(data);
-                  markersData = $.map(markersData, function(item){
-                    if(data.geolocation){
-                        return $.extend(true, {}, item,
-                        { 
-                        tooltip: { 
-                            isShown: (item.location[0] === data.geolocation.coordinates[1] && item.location[1] === data.geolocation.coordinates[0]) 
-                        }
-                        });
-                    }
-                    return $.extend(true, {}, item,
-                        { 
-                        tooltip: { 
-                            isShown: (item.tooltip.text === data.tlegalname +"<br/>"+ data.tphysicaladdress2 +', '+ data.tphysicalcity + '<br/> ' + data.tphysicalstate + ' ' + data.tphysicalzipcode5) 
-                        }
-                        });
-                  });
-                  if(!data.geolocation){
-                    DevExpress.ui.notify("Geocode not available for location.", "error", 1000);
-                  }
-                  else{
-                    mapWidget.option({center: [data.geolocation.coordinates[1], data.geolocation.coordinates[0]], zoom: 18});
-                    mapWidget.option("autoAdjust", false);
-                    mapWidget.option("zoom", 18);
-                  }
-                  mapWidget.option("markers", markersData);
-                }
-              }
-            });
-          }
+
         });
       }
   );
@@ -92,9 +40,9 @@ $(function(){
         //try to get user current location using getCurrentPosition() method
         navigator.geolocation.getCurrentPosition(function(position){
             whereami = {location: [position.coords.latitude, position.coords.longitude], iconSrc:markerUrl, tooltip: {text: "You are here!!"}};
-                markersData.push(
+                markersData = [
                     whereami
-                );
+                ];
                 mapWidget.option("markers", markersData);
                 mapWidget.option("center", [position.coords.latitude, position.coords.longitude]);
                 DevExpress.ui.notify("Found your location ["+position.coords.latitude+", "+ position.coords.longitude + "]", "success", "600");
@@ -130,4 +78,58 @@ $(function(){
                 break;
         }
     }
+
+    $("#gridContainer").dxDataGrid({
+        dataSource: [],
+        selection: {
+        mode: "single"
+        },
+        columns: [{
+            dataField: "tname",
+            caption: "Business"
+        }, {
+            dataField: "tcontactperson",
+            caption: "Contact",
+        }, {
+            dataField: "tphysicaladdress2",
+            caption: "Address",
+        }, {
+            dataField: "tphysicalcity",
+            caption: "City",
+        }, {
+            dataField: "naicname",
+            caption: "NAIC Category"
+        }],
+        onSelectionChanged: function (selectedItems) {
+            var data = selectedItems.selectedRowsData[0];
+            if(data) {
+                markersData = $.map(markersData, function(item){
+                if(data.geolocation){
+                    return $.extend(true, {}, item,
+                    { 
+                    tooltip: { 
+                        isShown: (item.location[0] === data.geolocation.coordinates[1] && item.location[1] === data.geolocation.coordinates[0]) 
+                    }
+                    });
+                }
+                return $.extend(true, {}, item,
+                    { 
+                    tooltip: { 
+                        isShown: (item.tooltip.text === data.tlegalname +"<br/>"+ data.tphysicaladdress2 +', '+ data.tphysicalcity + '<br/> ' + data.tphysicalstate + ' ' + data.tphysicalzipcode5) 
+                    }
+                    });
+                });
+                if(!data.geolocation){
+                DevExpress.ui.notify("Geocode not available for location.", "error", 1000);
+                }
+                else{
+                mapWidget.option({center: [data.geolocation.coordinates[1], data.geolocation.coordinates[0]], zoom: 18});
+                mapWidget.option("autoAdjust", false);
+                mapWidget.option("zoom", 18);
+                }
+                mapWidget.option("markers", markersData);
+            }
+        }
+    });
+    var dataGrid = $('#gridContainer').dxDataGrid('instance');
 });

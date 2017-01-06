@@ -28,5 +28,12 @@
     margin: 20px auto;
 }
 .dx-viewport{
-    background-color: teal;
+    background-color: gray;
+}
+label{
+    color:white;
+    font-size: 1.5em;
+}
+body {
+    padding: 20px;
 }
