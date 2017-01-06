@@ -2,7 +2,7 @@ $(function(){
   $("#search-string").dxTextBox({
       value: "",
       showClearButton: true,
-      placeholder: "Just type anything",
+      placeholder: "Search for a Business",
       valueChangeEvent: "keyup",
       onValueChanged: function(data) {
         $.getJSON('https://abclients.search.windows.net/indexes/clients/docs?api-version=2016-09-01&search='+data.value+'&api-key=F59E2669524D8C8DF68FC6833A2384A1', function(data){
@@ -66,8 +66,8 @@ $(function(){
       }
   });
     
-    var markerUrl = "https://js.devexpress.com/Demos/RealtorApp/images/map-marker.png",
-        markersData = [{
+    //var markerUrl = "https://js.devexpress.com/Demos/RealtorApp/images/map-marker.png",
+    var markersData = [{
                 location: [40.755833, -73.986389],
                 tooltip: {
                     text: "Times Square"
@@ -95,29 +95,9 @@ $(function(){
         height: 440,
         width: "100%",
         controls: true,
-        markerIconSrc: markerUrl,
+        //markerIconSrc: markerUrl,
         markers: markersData,
         autoAdjust: false,
         center: "Louisville, KY"
     }).dxMap("instance");
-
-    $("#use-custom-markers").dxCheckBox({
-        value: true,
-        text: "Use custom marker icons",
-        onValueChanged: function(data) {
-            mapWidget.option("markers", markersData);
-            mapWidget.option("markerIconSrc", data.value ? markerUrl : null);
-        }
-    });
-    
-    $("#show-tooltips").dxButton({
-        text: "Show all tooltips",
-        onClick: function() {
-            var newMarkers = $.map(markersData, function(item) {
-                return $.extend(true, {}, item, { tooltip: { isShown: true }} );
-            });
-    
-            mapWidget.option("markers", newMarkers);
-        }
-    });
 });
