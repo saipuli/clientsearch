@@ -108,7 +108,9 @@ $(function(){
                     return $.extend(true, {}, item,
                     { 
                     tooltip: { 
-                        isShown: (item.location[0] === data.geolocation.coordinates[1] && item.location[1] === data.geolocation.coordinates[0]) 
+                        isShown: (item.location[0] === data.geolocation.coordinates[1] 
+                                    && item.location[1] === data.geolocation.coordinates[0]
+                                    && item.tooltip.text.startsWith(data.tlegalname)) 
                     }
                     });
                 }
